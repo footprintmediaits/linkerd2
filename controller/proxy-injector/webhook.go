@@ -93,6 +93,16 @@ func Inject(
 		// If namespace has annotations that do not exist on pod then copy them
 		// over to pod's template.
 		resourceConfig.AppendNamespaceAnnotations()
+
+		// If the pod did not inherit the opaque ports annotation from the
+		// namespace, then add the default value from the config values. This
+		// ensures that the generated patch always sets the opaue ports
+		// annotation.
+		if !resourceConfig.HasPodAnnotation(pkgK8s.ProxyOpaquePortsAnnotation) {
+			opaquePorts := resourceConfig.GetValues().Proxy.OpaquePorts
+			resourceConfig.AppendPodAnnotation(pkgK8s.ProxyOpaquePortsAnnotation, opaquePorts)
+		}
+
 		patchJSON, err := resourceConfig.GetPodPatch(true)
 		if err != nil {
 			return nil, err
